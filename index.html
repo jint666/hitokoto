@@ -1,0 +1,230 @@
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>一言</title>
+    <style>
+        .center {
+            position: absolute;
+            top: 35%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            height: 18%;
+            /* font-size: calc(100vh / 15); */
+            font-size: 5vw; /* 使用 vw 单位以适应不同屏幕大小 */
+            font-family: '华文新魏', sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            animation: changeColor 10s infinite;
+            /* 设置动画名称，持续时间和重复次数 */
+            height: 100vh; /* 设置 body 高度为视口高度 */
+            display: flex; /* 使用 flexbox 布局 */
+            justify-content: center; /* 水平居中 */
+            align-items: center; /* 垂直居中 */
+            cursor: none; /* 隐藏默认的鼠标指针 */
+        }
+
+        .cursor {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.5);
+            position: absolute;
+            transform: translate(-50%, -50%);
+            pointer-events: none; /* 确保鼠标指针不会干扰其他元素的交互 */
+            animation: cursorAnimation 1s infinite;
+        }
+
+        @keyframes cursorAnimation {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.5);
+            }
+        }
+
+        @keyframes changeColor {
+            /* 定义动画 */
+            0% {
+                background-color: rgb(var(--r1), var(--g1), var(--b1));
+            }
+            /* 开始时的背景颜色，使用CSS变量存储随机RGB值 */
+            50% {
+                background-color: rgb(var(--r2), var(--g2), var(--b2));
+            }
+            /* 过渡到50%时的背景颜色，使用CSS变量存储随机RGB值 */
+            100% {
+                background-color: rgb(var(--r1), var(--g1), var(--b1));
+            }
+            /* 结束时的背景颜色，与开始时相同 */
+        }
+
+        @keyframes changeTextColor {
+            0% {
+                color: rgb(var(--tr1), var(--tg1), var(--tb1));
+            }
+            50% {
+                color: rgb(var(--tr2), var(--tg2), var(--tb2));
+            }
+            100% {
+                color: rgb(var(--tr1), var(--tg1), var(--tb1));
+            }
+        }
+
+        #text {
+            animation: changeTextColor 20s infinite;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8); /* 修改后的阴影效果 */
+        }
+    </style>
+    
+    <script>
+        var sentences = [""]; // 存储要显示的句子
+        var index = 0; // 当前句子的索引
+        var charIndex = 0; // 当前字符的索引
+        var interval; // 定时器
+        var currentSentence = '';
+        
+        function showSentence() {
+            var text = document.getElementById("text");
+            text.innerHTML = "";
+
+            getNewSentence();
+        }
+
+        function getNewSentence() {
+            fetch('https://international.v1.hitokoto.cn')
+            .then(response => response.json())
+            .then(data => {
+                const newSentence = `${data.hitokoto}`;
+                currentSentence = newSentence;
+                // 如果新句子与之前的句子相同,则继续获取新句子
+                if (sentences.includes(newSentence)) {
+                    getNewSentence();
+                    return;
+                }
+                
+                // 否则,添加新句子到数组中
+                sentences.push(newSentence);
+                
+                var text = document.getElementById("text");
+                text.innerHTML = "";
+                var sentence = sentences[index];
+                charIndex = 0;
+                interval = setInterval(showChar, Math.random() * (150 - 100) + 100);
+                
+                // 移除最后一个句子,保持数组长度为1
+                if (sentences.length > 1) {
+                    sentences.shift();
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching sentence:', error);
+                setTimeout(getNewSentence, 5000); // 5秒后重试
+            });
+        }
+
+        function showChar() {
+            var sentence = sentences[index]; // 获取当前句子
+            var text = document.getElementById("text"); // 获取文本元素
+            if (charIndex < sentence.length) { // 如果还有字符未显示
+                text.innerHTML += sentence.charAt(charIndex); // 显示下一个字符
+                setTimeout(() => {
+                    charIndex++;
+                }, 50);
+            } else { // 如果已经显示完毕
+                clearInterval(interval); // 清除定时器
+                index++; // 更新句子索引
+                if (index >= sentences.length) { // 如果已经没有更多句子了
+                    index = 0; // 回到第一句话 
+                }
+                setTimeout(showSentence, Math.random() * (3000 - 1000) + 1000); // 随机间隔1-3秒开始显示下一句话 
+            }
+        }
+        function copyToClipboard() {
+            const tempInput = document.createElement('textarea');
+            tempInput.value = currentSentence;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            console.log('Text copied to clipboard');
+        }
+        function randomColor(isLight = true) {
+            let r, g, b;
+
+            if (isLight) {
+                r = Math.floor(Math.random() * (235 - 200) + 200);
+                g = Math.floor(Math.random() * (235 - 200) + 200);
+                b = Math.floor(Math.random() * (235 - 200) + 200);
+            } else {
+                r = Math.floor(Math.random() * (100 - 50) + 50);
+                g = Math.floor(Math.random() * (100 - 50) + 50);
+                b = Math.floor(Math.random() * (100 - 50) + 50);
+            }
+
+            return { r, g, b };
+        }
+
+        function changeVariable() {
+            var body = document.querySelector("body");
+
+            // 设置背景颜色的 CSS 变量值(浅色范围)
+            const bgColor1 = randomColor(true);
+            body.style.setProperty("--r1", bgColor1.r);
+            body.style.setProperty("--g1", bgColor1.g);
+            body.style.setProperty("--b1", bgColor1.b);
+
+            const bgColor2 = randomColor(true);
+            body.style.setProperty("--r2", bgColor2.r);
+            body.style.setProperty("--g2", bgColor2.g);
+            body.style.setProperty("--b2", bgColor2.b);
+
+            // 设置文字颜色的 CSS 变量值(深色范围)
+            const textColor1 = randomColor(false);
+            body.style.setProperty("--tr1", textColor1.r);
+            body.style.setProperty("--tg1", textColor1.g);
+            body.style.setProperty("--tb1", textColor1.b);
+
+            const textColor2 = randomColor(false);
+            body.style.setProperty("--tr2", textColor2.r);
+            body.style.setProperty("--tg2", textColor2.g);
+            body.style.setProperty("--tb2", textColor2.b);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const cursorElement = document.createElement('div');
+            cursorElement.classList.add('cursor');
+            document.body.appendChild(cursorElement);
+
+            // 处理鼠标移动事件
+            document.addEventListener('mousemove', (e) => {
+                cursorElement.style.left = `${e.clientX}px`;
+                cursorElement.style.top = `${e.clientY}px`;
+            });
+
+            // 处理点击或触摸事件
+            document.addEventListener('click', handleClickOrTouch);
+            document.addEventListener('touchstart', handleClickOrTouch);
+        });
+
+        function handleClickOrTouch(e) {
+            e.preventDefault(); // 防止触摸事件触发缩放或其他默认行为
+            copyToClipboard();
+        }
+    </script>
+</head>
+
+<body onload="showSentence();changeVariable()">
+    <div class="center">
+        <p id="text"></p>
+    </div>
+</body>
