@@ -1,1 +1,1 @@
-# hitokoto-一言网页
+# hitokoto-一言网页逐字动态显示
